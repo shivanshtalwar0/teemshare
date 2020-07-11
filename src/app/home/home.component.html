@@ -1,0 +1,20 @@
+<form [formGroup]="registerForm">
+  <input  type="text" formControlName="username">
+  <div style="color: red" *ngIf="registerForm.controls['username'].errors && !registerForm.controls['username'].pristine" >
+    <div [hidden]="!registerForm.controls['username'].errors.required">username is required.</div>
+<!--    <div [hidden]="!loginForm.controls['email'].errors.patternInvalid">Email is invalid.</div>-->
+  </div>
+  <button (click)="registerUser()" [disabled]="!registerForm.valid">resgister</button>
+</form>
+<button (click)="leaveRoom()" style="color: red;" >Leave</button>
+
+
+<div class="">
+  <video class="video_view" id="my_view" autoplay playsinline width="200" height="200"></video>
+
+</div>
+
+<div class="">
+  <video class="video_view" id="remote_stream1" autoplay playsinline width="200" height="200"></video>
+
+</div>
