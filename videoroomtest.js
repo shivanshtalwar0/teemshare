@@ -44,9 +44,9 @@
 //
 var server = null;
 if(window.location.protocol === 'http:')
-	server = ['ws://104.45.152.100:48505',"http://104.45.152.100:48167/janus"];
+	server = ['wss://janus.onemandev.tech/websocket',"http://104.45.152.100:48167/janus"];
 else
-	server =[ 'ws://104.45.152.100:48505',"http://104.45.152.100:48167/janus"];
+	server =[ 'wss://janus.onemandev.tech/websocket',"http://104.45.152.100:48167/janus"];
 
 var janus = null;
 var sfutest = null;
