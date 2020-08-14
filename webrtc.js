@@ -1,4 +1,4 @@
-let testurl = "ws://104.45.152.100:48505"
+let testurl = "wss://janus.onemandev.tech/websocket"
 let secureurl = "wss://janus.onemandev.tech/websocket"
 let websocket = new WebSocket(testurl, "janus-protocol")
 let apisecret = { "apisecret": "SecureIt" }
@@ -63,12 +63,12 @@ websocket.onopen = () => {
             handleId = json.data.id;
             pc = new RTCPeerConnection({
                 iceServers: [{
-                    urls: "stun:104.45.152.100:3478",
+                    urls: "stun:coturn.onemandev.tech:5349",
                     username: "onemandev",
                     credential: "SecureIt"
                 },
                 {
-                    urls: "turn:104.45.152.100:3478",
+                    urls: "turn:coturn.onemandev.tech:5349",
                     username: "onemandev",
                     credential: "SecureIt"
                 }
@@ -92,7 +92,7 @@ websocket.onopen = () => {
             websocket.send(JSON.stringify(createMessage(register, null, sessionId, handleId, joinTransaction)))
             transactions[joinTransaction] = (json) => {
                 console.log(json)
-                let publish = { request: "configure", audio: true, video: true };
+                let publish = { request: "configure", audio: true, video: true,bitrate:20000000 };
                 let publishTransaction = "publishTransaction"
                 transactions[publishTransaction] = (json) => {
                     console.log(json)

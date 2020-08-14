@@ -44,9 +44,9 @@
 //
 var server = null;
 if(window.location.protocol === 'http:')
-	server = ['wss://janus.onemandev.tech/janus/websocket',"http://104.45.152.100:48167/janus"];
+	server = "http://" + window.location.hostname + ":8088/janus";
 else
-	server =[ 'wss://janus.onemandev.tech/janus/websocket',"http://104.45.152.100:48167/janus"];
+	server = "https://" + window.location.hostname + ":8089/janus";
 
 var janus = null;
 var sfutest = null;
@@ -65,34 +65,6 @@ var bitrateTimer = [];
 var doSimulcast = (getQueryStringValue("simulcast") === "yes" || getQueryStringValue("simulcast") === "true");
 var doSimulcast2 = (getQueryStringValue("simulcast2") === "yes" || getQueryStringValue("simulcast2") === "true");
 
-let videocount=50
-function initVideoContainers(count){
-
-  for(let i=1;i<= count;i++){
-    let col_md_4=document.createElement('div')
-    col_md_4.className="col-md-4"
-    let pannel=document.createElement("div")
-    pannel.className='panel panel-default'
-    col_md_4.appendChild(pannel);
-    let heading=document.createElement("div")
-    heading.className='panel-heading'
-    let h3=document.createElement("h3")
-    h3.className='panel-title'
-    h3.innerHTML='Remote Video #'+i;
-    heading.appendChild(h3)
-    pannel.appendChild(heading);
-    let body=document.createElement('div');
-    body.className='panel-body relative'
-    body.id="videoremote"+i;
-    pannel.appendChild(body);
-    let hola=document.getElementById('hola')
-    console.log(hola)
-      hola.appendChild(col_md_4)
-
-  }
-}
-
-
 $(document).ready(function() {
 	// Initialize the library (all console debuggers enabled)
 	Janus.init({debug: "all", callback: function() {
@@ -107,14 +79,14 @@ $(document).ready(function() {
 			// Create session
 			janus = new Janus(
 				{
-          iceServers: [{
-            username: "onemandev",
-            credential: "SecureIt",
-            urls: ["stun:40.85.216.95:3478", "turn:40.85.216.95:3478"],
-            //   //  use coturn docker for ice servers
-          }],
-          apisecret:"SecureIt",
-					server: server,
+                    server: ["wss://janus.onemandev.tech/janus/websocket"],
+                    apisecret:"SecureIt",
+                    iceServers: [{
+                        username: "onemandev",
+                        credential: "SecureIt",
+                        urls: ["stun:40.85.216.95:3478", "turn:40.85.216.95:3478"],
+                        //   //  use coturn docker for ice servers
+                      }],
 					success: function() {
 						// Attach to VideoRoom plugin
 						janus.attach(
@@ -235,7 +207,7 @@ $(document).ready(function() {
 												var leaving = msg["leaving"];
 												Janus.log("Publisher left: " + leaving);
 												var remoteFeed = null;
-												for(var i=1; i<=videocount; i++) {
+												for(var i=1; i<6; i++) {
 													if(feeds[i] && feeds[i].rfid == leaving) {
 														remoteFeed = feeds[i];
 														break;
@@ -258,7 +230,7 @@ $(document).ready(function() {
 													return;
 												}
 												var remoteFeed = null;
-												for(var i=1; i<=videocount; i++) {
+												for(var i=1; i<6; i++) {
 													if(feeds[i] && feeds[i].rfid == unpublished) {
 														remoteFeed = feeds[i];
 														break;
@@ -316,7 +288,7 @@ $(document).ready(function() {
 									$('#videojoin').hide();
 									$('#videos').removeClass('hide').show();
 									if($('#myvideo').length === 0) {
-										$('#videolocal').append('<video class="rounded centered" id="myvideo" style="width:100%;height: auto;" autoplay playsinline muted="muted"/>');
+										$('#videolocal').append('<video class="rounded centered" id="myvideo" width="100%" height="100%" autoplay playsinline muted="muted"/>');
 										// Add a 'mute' button
 										$('#videolocal').append('<button class="btn btn-warning btn-xs" id="mute" style="position: absolute; bottom: 0px; left: 0px; margin: 15px;">Mute</button>');
 										$('#mute').click(toggleMute);
@@ -426,7 +398,6 @@ function registerUsername() {
 		};
 		myusername = username;
 		sfutest.send({ message: register });
-    initVideoContainers(videocount);
 	}
 }
 
@@ -444,7 +415,7 @@ function publishOwnFeed(useAudio) {
 			simulcast2: doSimulcast2,
 			success: function(jsep) {
 				Janus.debug("Got publisher SDP!", jsep);
-				var publish = { request: "configure",  audio: useAudio, video: true };
+				var publish = { request: "configure", audio: useAudio, video: true };
 				// You can force a specific codec to use when publishing by using the
 				// audiocodec and videocodec properties, for instance:
 				// 		publish["audiocodec"] = "opus"
@@ -458,12 +429,11 @@ function publishOwnFeed(useAudio) {
 				sfutest.send({ message: publish, jsep: jsep });
 			},
 			error: function(error) {
-			  alert(error)
 				Janus.error("WebRTC error:", error);
 				if(useAudio) {
 					 publishOwnFeed(false);
 				} else {
-					// bootbox.alert("WebRTC error... " + error.message);
+					bootbox.alert("WebRTC error... " + error.message);
 					$('#publish').removeAttr('disabled').click(function() { publishOwnFeed(true); });
 				}
 			}
@@ -506,20 +476,20 @@ function newRemoteFeed(id, display, audio, video) {
 					room: myroom,
 					ptype: "subscriber",
 					feed: id,
-					// private_id: mypvtid
+					private_id: mypvtid
 				};
 				// In case you don't want to receive audio, video or data, even if the
 				// publisher is sending them, set the 'offer_audio', 'offer_video' or
 				// 'offer_data' properties to false (they're true by default), e.g.:
 				// 		subscribe["offer_video"] = false;
 				// For example, if the publisher is VP8 and this is Safari, let's avoid video
-				// if(Janus.webRTCAdapter.browserDetails.browser === "safari" &&
-				// 		(video === "vp9" || (video === "vp8" && !Janus.safariVp8))) {
-				// 	if(video)
-				// 		video = video.toUpperCase()
-				// 	toastr.warning("Publisher is using " + video + ", but Safari doesn't support it: disabling video");
-				// 	subscribe["offer_video"] = false;
-				// }
+				if(Janus.webRTCAdapter.browserDetails.browser === "safari" &&
+						(video === "vp9" || (video === "vp8" && !Janus.safariVp8))) {
+					if(video)
+						video = video.toUpperCase()
+					toastr.warning("Publisher is using " + video + ", but Safari doesn't support it: disabling video");
+					subscribe["offer_video"] = false;
+				}
 				remoteFeed.videoCodec = video;
 				remoteFeed.send({ message: subscribe });
 			},
@@ -536,7 +506,7 @@ function newRemoteFeed(id, display, audio, video) {
 				} else if(event) {
 					if(event === "attached") {
 						// Subscriber created and attached
-						for(var i=1;i<=videocount;i++) {
+						for(var i=1;i<6;i++) {
 							if(!feeds[i]) {
 								feeds[i] = remoteFeed;
 								remoteFeed.rfindex = i;
@@ -586,7 +556,7 @@ function newRemoteFeed(id, display, audio, video) {
 							},
 							error: function(error) {
 								Janus.error("WebRTC error:", error);
-								// bootbox.alert("WebRTC error... " + error.message);
+								bootbox.alert("WebRTC error... " + error.message);
 							}
 						});
 				}
@@ -607,7 +577,7 @@ function newRemoteFeed(id, display, audio, video) {
 					addButtons = true;
 					// No remote video yet
 					$('#videoremote'+remoteFeed.rfindex).append('<video class="rounded centered" id="waitingvideo' + remoteFeed.rfindex + '" width=320 height=240 />');
-					$('#videoremote'+remoteFeed.rfindex).append('<video class="rounded centered relative hide" id="remotevideo' + remoteFeed.rfindex + '" style="width:100%;height:20em;" autoplay playsinline/>');
+					$('#videoremote'+remoteFeed.rfindex).append('<video class="rounded centered relative hide" id="remotevideo' + remoteFeed.rfindex + '" width="100%" height="100%" autoplay playsinline/>');
 					$('#videoremote'+remoteFeed.rfindex).append(
 						'<span class="label label-primary hide" id="curres'+remoteFeed.rfindex+'" style="position: absolute; bottom: 0px; left: 0px; margin: 15px;"></span>' +
 						'<span class="label label-info hide" id="curbitrate'+remoteFeed.rfindex+'" style="position: absolute; bottom: 0px; right: 0px; margin: 15px;"></span>');
